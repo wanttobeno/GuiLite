@@ -50,6 +50,9 @@
     <ClCompile Include="src\display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\adapter\stb_image.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core_include\api.h">
@@ -90,6 +93,9 @@
     </ClInclude>
     <ClInclude Include="core_include\display.h">
       <Filter>Header Files\core_include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\adapter\stb_image.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

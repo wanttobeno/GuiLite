@@ -235,6 +235,99 @@ typedef struct {
 }Infohead;
 #pragma pack(pop)
 
+
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif  //__cplusplus
+
+#include "stb_image.h"
+
+#ifdef __cplusplus
+}
+#endif  //__cplusplus
+
+
+class CMemoryBmp
+{
+public:
+	CMemoryBmp(int nBmpSize)
+	{
+		_Size = nBmpSize;
+		_pBmpData = (char*)malloc(nBmpSize);
+		memset(_pBmpData, 0, _Size);
+	}
+	~CMemoryBmp()
+	{
+		free(_pBmpData);
+	}
+	bool WritePand(void* pdata, int nLen)
+	{
+		bool bRet = false;
+		do
+		{
+			if (!pdata)
+				break;
+			if (_nPos + nLen <= _Size)
+			{
+				memcpy(_pBmpData + _nPos, pdata, nLen);
+				_nPos += nLen;
+			}
+		} while (0);
+		return bRet;
+	}
+	bool WriteAtPos(int nStartPos, void* pdata, int nLen)
+	{
+		bool bRet = false;
+		do
+		{
+			if (!pdata)
+				break;
+			if (nStartPos + nLen <= _Size)
+				break;
+			memcpy(_pBmpData + nStartPos, pdata, nLen);
+		} while (0);
+		return bRet;
+	}
+	void* GetBmp()
+	{
+		return _pBmpData;
+	}
+	int GetBmpSize()
+	{
+		return _Size;
+	}
+	bool SaveToFile(char* szPath)
+	{
+		bool bRet = false;
+		FILE* pFile = fopen(szPath, "wb");
+		if (pFile)
+		{
+			int nWrite = fwrite(_pBmpData, 1, _Size, pFile);
+			if (nWrite == _Size)
+			{
+				bRet = true;
+			}
+			fclose(pFile);
+		}
+		return bRet;
+	}
+protected:
+private:
+	int  _Size;
+	int  _nPos;
+	char* _pBmpData;
+};
+
+
+// 
+typedef int(WINAPI*_PaintCallBack)(HWND Hwnd, HBITMAP bitmap);
+extern _PaintCallBack paintcallback;
+extern HWND  g_win_hwnd;
+
 int build_bmp(char *filename, unsigned int width, unsigned int height, unsigned char *data)
 {
 	FileHead bmp_head;
@@ -266,6 +359,57 @@ int build_bmp(char *filename, unsigned int width, unsigned int height, unsigned 
 	bmp_info.biBlueMask = 0x001F;
 
 	//copy the data
+if (paintcallback)
+{
+	static DWORD dwTime = GetTickCount();
+	CMemoryBmp  memBmp(sizeof(BITMAPINFOHEADER)+sizeof(BITMAPINFOHEADER)+width * height * 2);
+	memBmp.WritePand(&bmp_head, sizeof(FileHead));
+	memBmp.WritePand(&bmp_info, sizeof(Infohead));
+	for (int i = (height - 1); i >= 0; --i)
+	{
+		memBmp.WritePand(&data[i * width * 2], width * 2);
+	}
+	//memBmp.SaveToFile("d:\\test.bmp");
+	LPBYTE pImage = NULL;
+	int x, y, n;
+	pImage = stbi_load_from_memory((stbi_uc const *)memBmp.GetBmp(), memBmp.GetBmpSize(), &x, &y, &n, 4);
+
+	BITMAPINFO bmi;
+	::ZeroMemory(&bmi, sizeof(BITMAPINFO));
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biWidth = x;
+	bmi.bmiHeader.biHeight = -y;
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 32;
+	bmi.bmiHeader.biCompression = BI_RGB;
+	bmi.bmiHeader.biSizeImage = x * y * 4;
+
+	bool bAlphaChannel = false;
+	LPBYTE pDest = NULL;
+	HBITMAP hBitmap = ::CreateDIBSection(NULL, &bmi, DIB_RGB_COLORS, (void**)&pDest, NULL, 0);
+	if (hBitmap)
+	{
+		if (paintcallback)
+		{
+			DWORD dwTimeEnd = GetTickCount();
+			memcpy(pDest, pImage, x*y * 4);
+			paintcallback(g_win_hwnd, hBitmap);
+#ifdef _DEBUG
+			char buf[MAX_PATH] = { 0 };
+			sprintf(buf, "%d \n", dwTimeEnd - dwTime);;
+			OutputDebugStringA(buf);
+			dwTime = dwTimeEnd;
+#endif // _DEBUG
+		}
+		else
+		{
+			DeleteObject(hBitmap);
+		}
+	}
+	stbi_image_free(pImage);
+}
+else
+{
 	FILE *fp;
 	if (!(fp = fopen(filename, "wb")))
 	{
@@ -282,5 +426,7 @@ int build_bmp(char *filename, unsigned int width, unsigned int height, unsigned 
 	}
 
 	fclose(fp);
+}
+		
 	return 0;
 }

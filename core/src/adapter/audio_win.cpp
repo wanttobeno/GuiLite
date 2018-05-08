@@ -82,6 +82,7 @@ static int register_wav_resouce(AUDIO_TYPE type, wchar_t* wav_path)
 
 	s_wav_resource[type].p_data = p_data;
 	s_wav_resource[type].size = size;
+	CloseHandle(hFile);
 	return 0;
 }
 
