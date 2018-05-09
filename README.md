@@ -40,7 +40,7 @@ Build UI framework for all platform with 6,000 lines code
 
 以下函数，循环调用生成数据
 
-····c
+`c
 
 static DWORD WINAPI fire_real_timer(LPVOID lpParam)
 {
@@ -62,7 +62,7 @@ static DWORD WINAPI fire_real_timer(LPVOID lpParam)
 // 调用
 static void real_timer_routine(void* arg)
 
-···
+`
 
  
 ---
@@ -86,25 +86,22 @@ static void real_timer_routine(void* arg)
 中判断回调函数不为空的时候调用win32的界面绘制。
 
 3、存在回调函数式，图片直接写入到内存，不经过硬盘。添加了类CMemoryBmp用于写入bmp文件。
-并将位图装换为HBITMAP供窗口使用。
+并将位图转换为HBITMAP供窗口使用。
 
 4、添加切换接口SetActiveSlide，用于切换视图。
 
 5、底层的消息是回调的，为了避免线程操作UI使用了PostMessage。
 
-6、底层算法的CPU使用率过高，这里将LOOP_SNAPSHOT_INTERVAL的数值由50设置为500，
+6、底层算法的CPU使用率过高，这里将LOOP_SNAPSHOT_INTERVAL的数值由50设置为500。CPU占用下降了点，但是还是很高。
 
 ---
 
 优化建议：
 
-1、数据转为位图位图的生成最占时间，算法可优化。可采用移动法，每次只生产前面几列，
-类似水管，左边进，右边出，中间的数据不变。
+1、数据转为位图的生成最占时间，算法可优化。可采用移动法，每次只生产前面几列，
+类似水管，左边进，右边出，中间的数据不变。使用区域化刷新机制。
 
 2、在win32位下统一使用bmp 32bit模式，不使用16bit模式。
-
-
-
 
 
 
